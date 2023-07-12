@@ -16,17 +16,15 @@ interface IForm {
 }
 
 function CreateCategory() {
-  const setCategory = useSetRecoilState(categoriesState);
+  const setcategories = useSetRecoilState(categoriesState);
   const category = useRecoilValue(categoriesState);
   const { register, handleSubmit, setValue } = useForm<ICategory>();
   //   const [toDos, setToDos] = useRecoilState(toDoState);
   const addNewCategory = (data: ICategory) => {
     const { NEW_CATEGORY } = data;
 
-    setCategory((prevCategories) => ({
-      [NEW_CATEGORY]: NEW_CATEGORY,
-      ...prevCategories,
-    }));
+    setcategories((prevCategories) => [...prevCategories, NEW_CATEGORY]);
+    setValue("NEW_CATEGORY", "");
   };
   return (
     <form
