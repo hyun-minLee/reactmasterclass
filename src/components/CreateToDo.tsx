@@ -5,7 +5,7 @@ import {
   useRecoilValue,
   useSetRecoilState,
 } from "recoil";
-import { catagoryState, toDoState } from "../atoms";
+import { categoriesState, toDoState } from "../atoms";
 
 interface IForm {
   toDo: string;
@@ -13,12 +13,13 @@ interface IForm {
 
 function CreateToDo() {
   const setToDos = useSetRecoilState(toDoState);
-  const catagory = useRecoilValue(catagoryState);
+  // const catagory = useRecoilValue(catagoryState);
+  const catagory = useRecoilValue(categoriesState);
   const { register, handleSubmit, setValue } = useForm<IForm>();
   //   const [toDos, setToDos] = useRecoilState(toDoState);
   const onSubmit = ({ toDo }: IForm) => {
     setToDos((oldtoDos) => [
-      { text: toDo, catagory: catagory, id: Date.now() },
+      { text: toDo, [catagory]: catagory, id: Date.now() },
       ...oldtoDos,
     ]);
     setValue("toDo", "");
