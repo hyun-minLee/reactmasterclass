@@ -6,11 +6,17 @@ import { theme } from "./theme";
 import { QueryClient, QueryClientProvider } from "react-query";
 import { RecoilRoot } from "recoil";
 
+const queryClient = new QueryClient();
+
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement
 );
 root.render(
   <React.StrictMode>
-    <App />
+    <RecoilRoot>
+      <ThemeProvider theme={theme}>
+        <App />
+      </ThemeProvider>
+    </RecoilRoot>
   </React.StrictMode>
 );
