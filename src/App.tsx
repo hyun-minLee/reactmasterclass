@@ -7,7 +7,21 @@ import {
 } from "framer-motion";
 import { useState } from "react";
 
-const Button = styled.button`
+const switchVariants = {
+  start: {
+    size: 10,
+    scale: 1,
+    color: "#00FFFF",
+  },
+  end: (clickswitch: boolean) => ({
+    color: clickswitch ? "#FFFF00" : "#00FFFF",
+    transition: {
+      duration: 0.3,
+    },
+  }),
+};
+
+const Button = styled(motion.div)`
   color: #ff0040;
 `;
 
@@ -18,7 +32,7 @@ const Wrapper = styled.div`
   justify-content: center;
   align-items: center;
   flex-direction: column;
-  background-color: crimson;
+  background-color: #df0174;
 `;
 const Box = styled(motion.div)`
   background-color: rgba(255, 255, 255, 0.4);
@@ -73,7 +87,6 @@ function App() {
   const [id, setId] = useState<null | string>(null);
   const [clicked, setClicked] = useState(false);
   const [clickswitch, clickSetSwitch] = useState(false);
-  const [color, setColor] = useState("#d358f7");
   const [hoveredBox, setHoveredBox] = useState<null | string>(null);
   const [boxPosition, setBoxPosition] = useState({ x: 0, y: 0 });
 
@@ -107,7 +120,9 @@ function App() {
             key={n}
             layoutId={n}
           >
-            {n === "2" && <Circle layoutId="switch" />}
+            {n === "2" && clickswitch === false ? (
+              <Circle layoutId="switch" />
+            ) : null}
             {n === "3" && clickswitch === true ? (
               <Circle layoutId="switch" />
             ) : null}
@@ -126,7 +141,15 @@ function App() {
           </Overlay>
         ) : null}
       </AnimatePresence>
-      <Button onClick={swithON}>Switch</Button>
+      <Button
+        variants={switchVariants}
+        initial="start"
+        custom={clickswitch}
+        animate="end"
+        onClick={swithON}
+      >
+        Switch
+      </Button>
     </Wrapper>
   );
 }
