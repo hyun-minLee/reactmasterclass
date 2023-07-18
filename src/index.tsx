@@ -1,10 +1,15 @@
 import React from "react";
+<<<<<<< HEAD
 import ReactDOM from "react-dom";
 import { RecoilRoot } from "recoil";
 import { ThemeProvider } from "styled-components";
 import App from "./App";
 import { createGlobalStyle } from "styled-components";
 import { theme } from "./theme";
+=======
+import ReactDOM from "react-dom/client";
+import App from "./App";
+>>>>>>> 93961c1d1e7fc71127b52cbf6a4284fa2b604c6a
 
 const GlobalStyle = createGlobalStyle`
 @import url('https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@300;400&display=swap');
