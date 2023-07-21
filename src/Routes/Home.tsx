@@ -1,7 +1,12 @@
 import { useQuery } from "react-query";
 import styled from "styled-components";
 import { motion, AnimatePresence, useScroll } from "framer-motion";
-import { getMovies, IGetMoviesResult } from "../api";
+import {
+  getMovies,
+  IGetMoviesResult,
+  getPopularMovies,
+  IGetOnAirTVResult,
+} from "../api";
 import { makeImagePath } from "../utils";
 import { useState } from "react";
 import { useHistory, useRouteMatch } from "react-router-dom";
@@ -9,6 +14,7 @@ import { useHistory, useRouteMatch } from "react-router-dom";
 const Wrapper = styled.div`
   background: black;
   padding-bottom: 200px;
+  height: 200vh;
 `;
 
 const Loader = styled.div`
@@ -44,6 +50,11 @@ const Slider = styled.div`
   top: -100px;
 `;
 
+const Slider2 = styled.div`
+  position: relative;
+  top: +100px;
+`;
+
 const Row = styled(motion.div)`
   display: grid;
   gap: 5px;
@@ -52,7 +63,32 @@ const Row = styled(motion.div)`
   width: 100%;
 `;
 
+const Row2 = styled(motion.div)`
+  display: grid;
+  gap: 5px;
+  grid-template-columns: repeat(6, 1fr);
+  position: absolute;
+  width: 100%;
+`;
+
 const Box = styled(motion.div)<{ bgPhoto: string }>`
+  background-color: white;
+  background-image: url(${(props) => props.bgPhoto});
+  background-size: cover;
+  background-position: center center;
+  height: 200px;
+
+  cursor: pointer;
+  font-size: 66px;
+  &:first-child {
+    transform-origin: center left;
+  }
+  &:last-child {
+    transform-origin: center right;
+  }
+`;
+
+const Box2 = styled(motion.div)<{ bgPhoto: string }>`
   background-color: white;
   background-image: url(${(props) => props.bgPhoto});
   background-size: cover;
@@ -112,6 +148,12 @@ const BigOverview = styled.p`
   color: ${(props) => props.theme.white.lighter};
 `;
 
+const Type = styled(motion.div)`
+  color: linear-gradient(rgba(0, 0, 0, 0), #77c413);
+  cursor: pointer;
+  font-size: 20px;
+`;
+
 const Info = styled(motion.div)`
   padding: 10px;
   background-color: ${(props) => props.theme.black.lighter};
@@ -134,6 +176,18 @@ const rowVariants = {
   },
   exit: {
     x: -window.outerWidth - 5,
+  },
+};
+
+const rowVariants2 = {
+  hidden: {
+    x: -window.outerWidth - 5,
+  },
+  visible: {
+    x: 0,
+  },
+  exit: {
+    x: window.outerWidth + 5,
   },
 };
 
@@ -169,20 +223,32 @@ const offset = 6;
 function Home() {
   const history = useHistory(); //url를 바꾸기위해서는 histroy obeject에 접근
   const bigMovieMatch = useRouteMatch<{ movieId: string }>("/movies/:movieId"); //movies/:movieId<< 랑 맞는지 확인해줌, 그리고 useRouteMatch안에 movieId가 string이라고 알려줘야함
-  console.log(bigMovieMatch);
+  const bigOnairTVMatch = useRouteMatch<{ tvId: string }>("/tv/:tvId");
+  console.log("bigMovieMatch==", bigMovieMatch);
+  console.log("bigOnairTVMatch==", bigOnairTVMatch);
+
   const { scrollY } = useScroll();
-  const { data, isLoading } = useQuery<IGetMoviesResult>(
-    ["movies", "nowPlaying"],
-    getMovies
-  );
+  const { data: moviesData, isLoading: isMoviesLoading } =
+    useQuery<IGetMoviesResult>(["movies", "nowPlaying"], getMovies);
+  const { data: onAirTVData, isLoading: isOnAirTVLoading } =
+    useQuery<IGetOnAirTVResult>(["tv", "onAir"], getPopularMovies);
+
   const [index, setIndex] = useState(0);
   const [leaving, setLeaving] = useState(false);
   const incraseIndex = () => {
-    if (data) {
+    if (moviesData) {
       if (leaving) return;
       toggleLeaving();
-      const totalMovies = data.results.length - 1;
+      const totalMovies = moviesData.results.length - 1;
       const maxIndex = Math.floor(totalMovies / offset) - 1;
+      setIndex((prev) => (prev === maxIndex ? 0 : prev + 1));
+    }
+
+    if (onAirTVData) {
+      if (leaving) return;
+      toggleLeaving();
+      const totalTV = onAirTVData.results.length - 1;
+      const maxIndex = Math.floor(totalTV / offset) - 1;
       setIndex((prev) => (prev === maxIndex ? 0 : prev + 1));
     }
   };
@@ -190,24 +256,33 @@ function Home() {
   const onBoxClicked = (movieId: number) => {
     history.push(`/movies/${movieId}`);
   };
+  const onTVBoxClicked = (tvId: number) => {
+    history.push(`/tv/${tvId}`);
+  };
   const onOverlayClick = () => history.push("/");
   const clickedMovie =
     bigMovieMatch?.params.movieId &&
-    data?.results.find((movie) => movie.id === +bigMovieMatch.params.movieId);
+    moviesData?.results.find(
+      (movie) => movie.id === +bigMovieMatch.params.movieId
+    );
+  const clickeTv =
+    bigOnairTVMatch?.params.tvId &&
+    onAirTVData?.results.find((tv) => tv.id === +bigOnairTVMatch.params.tvId);
   return (
     <Wrapper>
-      {isLoading ? (
+      {isMoviesLoading && isOnAirTVLoading ? (
         <Loader>Loading...</Loader>
       ) : (
         <>
           <Banner
             onClick={incraseIndex}
-            bgPhoto={makeImagePath(data?.results[0].backdrop_path || "")}
+            bgPhoto={makeImagePath(moviesData?.results[0].backdrop_path || "")}
           >
-            <Title>{data?.results[0].title}</Title>
-            <Overview>{data?.results[0].overview}</Overview>
+            <Title>{moviesData?.results[0].title}</Title>
+            <Overview>{moviesData?.results[0].overview}</Overview>
           </Banner>
           <Slider>
+            <Type>Movies</Type>
             <AnimatePresence initial={false} onExitComplete={toggleLeaving}>
               <Row
                 variants={rowVariants}
@@ -217,7 +292,7 @@ function Home() {
                 transition={{ type: "tween", duration: 1 }}
                 key={index}
               >
-                {data?.results
+                {moviesData?.results
                   .slice(1)
                   .slice(offset * index, offset * index + offset)
                   .map((movie) => (
@@ -239,6 +314,39 @@ function Home() {
               </Row>
             </AnimatePresence>
           </Slider>
+          <Slider2>
+            <Type>TV</Type>
+            <AnimatePresence initial={false} onExitComplete={toggleLeaving}>
+              <Row2
+                variants={rowVariants2}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+                transition={{ type: "tween", duration: 1 }}
+                key={index}
+              >
+                {onAirTVData?.results
+                  .slice(1)
+                  .slice(offset * index, offset * index + offset)
+                  .map((tv) => (
+                    <Box2
+                      layoutId={tv.id + ""} //layoutId는 string이여야 하므로 movie.id+""<< 이렇게 설정
+                      key={tv.id}
+                      whileHover="hover"
+                      initial="normal"
+                      variants={boxVariants}
+                      onClick={() => onTVBoxClicked(tv.id)}
+                      transition={{ type: "tween" }}
+                      bgPhoto={makeImagePath(tv.backdrop_path, "w500")}
+                    >
+                      <Info variants={infoVariants}>
+                        <h4>{tv.name}</h4>
+                      </Info>
+                    </Box2>
+                  ))}
+              </Row2>
+            </AnimatePresence>
+          </Slider2>
           <AnimatePresence>
             {bigMovieMatch ? (
               <>
@@ -251,7 +359,6 @@ function Home() {
                   style={{ top: scrollY.get() + 100 }}
                   layoutId={bigMovieMatch.params.movieId}
                 >
-                  hello
                   {clickedMovie && (
                     <>
                       <BigCover
@@ -264,6 +371,34 @@ function Home() {
                       />
                       <BigTitle>{clickedMovie.title}</BigTitle>
                       <BigOverview>{clickedMovie.overview}</BigOverview>
+                    </>
+                  )}
+                </BigMovie>
+              </>
+            ) : null}
+            {bigOnairTVMatch ? (
+              <>
+                <Overlay
+                  onClick={onOverlayClick}
+                  exit={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                />
+                <BigMovie
+                  style={{ top: scrollY.get() + 100 }}
+                  layoutId={bigOnairTVMatch.params.tvId}
+                >
+                  {clickeTv && (
+                    <>
+                      <BigCover
+                        style={{
+                          backgroundImage: `linear-gradient(to top, black, transparent), url(${makeImagePath(
+                            clickeTv.backdrop_path,
+                            "w500"
+                          )})`,
+                        }}
+                      />
+                      <BigTitle>{clickeTv.name}</BigTitle>
+                      <BigOverview>{clickeTv.overview}</BigOverview>
                     </>
                   )}
                 </BigMovie>

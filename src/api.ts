@@ -9,6 +9,15 @@ interface IMovie {
   overview: string;
 }
 
+interface IOnAirTV {
+  id: number;
+  backdrop_path: string;
+  poster_path: string;
+  name: string;
+  popularity: number;
+  overview: string;
+}
+
 export interface IGetMoviesResult {
   dates: {
     maximum: string;
@@ -20,8 +29,21 @@ export interface IGetMoviesResult {
   total_results: number;
 }
 
+export interface IGetOnAirTVResult {
+  page: number;
+  results: IOnAirTV[];
+  total_pages: number;
+  total_results: number;
+}
+
 export function getMovies() {
   return fetch(`${BASE_PATH}/movie/now_playing?api_key=${API_KEY}`).then(
+    (response) => response.json()
+  );
+}
+
+export function getPopularMovies() {
+  return fetch(`${BASE_PATH}/tv/on_the_air?api_key=${API_KEY}`).then(
     (response) => response.json()
   );
 }
