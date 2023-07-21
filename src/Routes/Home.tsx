@@ -224,8 +224,6 @@ function Home() {
   const history = useHistory(); //url를 바꾸기위해서는 histroy obeject에 접근
   const bigMovieMatch = useRouteMatch<{ movieId: string }>("/movies/:movieId"); //movies/:movieId<< 랑 맞는지 확인해줌, 그리고 useRouteMatch안에 movieId가 string이라고 알려줘야함
   const bigOnairTVMatch = useRouteMatch<{ tvId: string }>("/tv/:tvId");
-  console.log("bigMovieMatch==", bigMovieMatch);
-  console.log("bigOnairTVMatch==", bigOnairTVMatch);
 
   const { scrollY } = useScroll();
   const { data: moviesData, isLoading: isMoviesLoading } =
@@ -268,6 +266,9 @@ function Home() {
   const clickeTv =
     bigOnairTVMatch?.params.tvId &&
     onAirTVData?.results.find((tv) => tv.id === +bigOnairTVMatch.params.tvId);
+
+  const TypecheckClick = (type: string) => console.log(type);
+
   return (
     <Wrapper>
       {isMoviesLoading && isOnAirTVLoading ? (
@@ -282,7 +283,7 @@ function Home() {
             <Overview>{moviesData?.results[0].overview}</Overview>
           </Banner>
           <Slider>
-            <Type>Movies</Type>
+            <Type onClick={() => TypecheckClick("movie")}>Movies</Type>
             <AnimatePresence initial={false} onExitComplete={toggleLeaving}>
               <Row
                 variants={rowVariants}
@@ -315,7 +316,7 @@ function Home() {
             </AnimatePresence>
           </Slider>
           <Slider2>
-            <Type>TV</Type>
+            <Type onClick={() => TypecheckClick("tv")}>TV</Type>
             <AnimatePresence initial={false} onExitComplete={toggleLeaving}>
               <Row2
                 variants={rowVariants2}
