@@ -4,8 +4,8 @@ import { motion, AnimatePresence, useScroll } from "framer-motion";
 import {
   getMovies,
   IGetMoviesResult,
-  getPopularMovies,
-  IGetOnAirTVResult,
+  getTopRateMovies,
+  IGetTopRateMoviesResult,
 } from "../api";
 import { makeImagePath } from "../utils";
 import { useState } from "react";
@@ -223,16 +223,24 @@ const offset = 6;
 function Home() {
   const history = useHistory(); //url를 바꾸기위해서는 histroy obeject에 접근
   const bigMovieMatch = useRouteMatch<{ movieId: string }>("/movies/:movieId"); //movies/:movieId<< 랑 맞는지 확인해줌, 그리고 useRouteMatch안에 movieId가 string이라고 알려줘야함
-  const bigOnairTVMatch = useRouteMatch<{ tvId: string }>("/tv/:tvId");
+  const bigTopRateMovieMatch = useRouteMatch<{ movieId: string }>(
+    "/topratemovies/:movieId"
+  );
 
   const { scrollY } = useScroll();
   const { data: moviesData, isLoading: isMoviesLoading } =
     useQuery<IGetMoviesResult>(["movies", "nowPlaying"], getMovies);
-  const { data: onAirTVData, isLoading: isOnAirTVLoading } =
-    useQuery<IGetOnAirTVResult>(["tv", "onAir"], getPopularMovies);
+  const { data: onTopRateMoviesData, isLoading: isTopRateMoviesLoading } =
+    useQuery<IGetTopRateMoviesResult>(
+      ["topratemovies", "ontoprate"],
+      getTopRateMovies
+    );
+
+  console.log("onTopRateMoviesData", onTopRateMoviesData);
 
   const [index, setIndex] = useState(0);
   const [leaving, setLeaving] = useState(false);
+  const [type, SetType] = useState(true);
   const incraseIndex = () => {
     if (moviesData) {
       if (leaving) return;
@@ -242,11 +250,11 @@ function Home() {
       setIndex((prev) => (prev === maxIndex ? 0 : prev + 1));
     }
 
-    if (onAirTVData) {
+    if (onTopRateMoviesData) {
       if (leaving) return;
       toggleLeaving();
-      const totalTV = onAirTVData.results.length - 1;
-      const maxIndex = Math.floor(totalTV / offset) - 1;
+      const totalTopRateMovies = onTopRateMoviesData.results.length - 1;
+      const maxIndex = Math.floor(totalTopRateMovies / offset) - 1;
       setIndex((prev) => (prev === maxIndex ? 0 : prev + 1));
     }
   };
@@ -254,8 +262,8 @@ function Home() {
   const onBoxClicked = (movieId: number) => {
     history.push(`/movies/${movieId}`);
   };
-  const onTVBoxClicked = (tvId: number) => {
-    history.push(`/tv/${tvId}`);
+  const onTopRateBoxClicked = (movieId: number) => {
+    history.push(`/topratemovies/${movieId}`);
   };
   const onOverlayClick = () => history.push("/");
   const clickedMovie =
@@ -263,15 +271,26 @@ function Home() {
     moviesData?.results.find(
       (movie) => movie.id === +bigMovieMatch.params.movieId
     );
-  const clickeTv =
-    bigOnairTVMatch?.params.tvId &&
-    onAirTVData?.results.find((tv) => tv.id === +bigOnairTVMatch.params.tvId);
+  const clickeTopRateMovie =
+    bigTopRateMovieMatch?.params.movieId &&
+    onTopRateMoviesData?.results.find(
+      (topratemovies) =>
+        topratemovies.id === +bigTopRateMovieMatch.params.movieId
+    );
 
-  const TypecheckClick = (type: string) => console.log(type);
+  console.log(clickeTopRateMovie);
+
+  const TypecheckClick = (type: string) => {
+    if (type === "TV") {
+      SetType((prev) => !prev);
+    } else if (type === "MOVIE") {
+      SetType((prev) => !prev);
+    }
+  };
 
   return (
     <Wrapper>
-      {isMoviesLoading && isOnAirTVLoading ? (
+      {isMoviesLoading ? (
         <Loader>Loading...</Loader>
       ) : (
         <>
@@ -283,7 +302,7 @@ function Home() {
             <Overview>{moviesData?.results[0].overview}</Overview>
           </Banner>
           <Slider>
-            <Type onClick={() => TypecheckClick("movie")}>Movies</Type>
+            <Type onClick={() => TypecheckClick("MOVIE")}>Movies</Type>
             <AnimatePresence initial={false} onExitComplete={toggleLeaving}>
               <Row
                 variants={rowVariants}
@@ -316,7 +335,7 @@ function Home() {
             </AnimatePresence>
           </Slider>
           <Slider2>
-            <Type onClick={() => TypecheckClick("tv")}>TV</Type>
+            <Type onClick={() => TypecheckClick("TV")}>Top Rate Movies</Type>
             <AnimatePresence initial={false} onExitComplete={toggleLeaving}>
               <Row2
                 variants={rowVariants2}
@@ -326,22 +345,25 @@ function Home() {
                 transition={{ type: "tween", duration: 1 }}
                 key={index}
               >
-                {onAirTVData?.results
+                {onTopRateMoviesData?.results
                   .slice(1)
                   .slice(offset * index, offset * index + offset)
-                  .map((tv) => (
+                  .map((topratemovie) => (
                     <Box2
-                      layoutId={tv.id + ""} //layoutId는 string이여야 하므로 movie.id+""<< 이렇게 설정
-                      key={tv.id}
+                      layoutId={topratemovie.id + ""} //layoutId는 string이여야 하므로 movie.id+""<< 이렇게 설정
+                      key={topratemovie.id}
                       whileHover="hover"
                       initial="normal"
                       variants={boxVariants}
-                      onClick={() => onTVBoxClicked(tv.id)}
+                      onClick={() => onTopRateBoxClicked(topratemovie.id)}
                       transition={{ type: "tween" }}
-                      bgPhoto={makeImagePath(tv.backdrop_path, "w500")}
+                      bgPhoto={makeImagePath(
+                        topratemovie.backdrop_path,
+                        "w500"
+                      )}
                     >
                       <Info variants={infoVariants}>
-                        <h4>{tv.name}</h4>
+                        <h4>{topratemovie.title}</h4>
                       </Info>
                     </Box2>
                   ))}
@@ -377,7 +399,7 @@ function Home() {
                 </BigMovie>
               </>
             ) : null}
-            {bigOnairTVMatch ? (
+            {bigTopRateMovieMatch ? (
               <>
                 <Overlay
                   onClick={onOverlayClick}
@@ -386,20 +408,20 @@ function Home() {
                 />
                 <BigMovie
                   style={{ top: scrollY.get() + 100 }}
-                  layoutId={bigOnairTVMatch.params.tvId}
+                  layoutId={bigTopRateMovieMatch.params.movieId}
                 >
-                  {clickeTv && (
+                  {clickeTopRateMovie && (
                     <>
                       <BigCover
                         style={{
                           backgroundImage: `linear-gradient(to top, black, transparent), url(${makeImagePath(
-                            clickeTv.backdrop_path,
+                            clickeTopRateMovie.backdrop_path,
                             "w500"
                           )})`,
                         }}
                       />
-                      <BigTitle>{clickeTv.name}</BigTitle>
-                      <BigOverview>{clickeTv.overview}</BigOverview>
+                      <BigTitle>{clickeTopRateMovie.title}</BigTitle>
+                      <BigOverview>{clickeTopRateMovie.overview}</BigOverview>
                     </>
                   )}
                 </BigMovie>

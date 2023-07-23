@@ -18,6 +18,26 @@ interface IOnAirTV {
   overview: string;
 }
 
+interface ITopRateTV {
+  backdrop_path: string;
+  id: number;
+  name: string;
+  popularity: number;
+  poster_path: string;
+  vote_average: string;
+  overview: string;
+}
+
+interface ITopRateMovies {
+  backdrop_path: string;
+  id: number;
+  title: string;
+  popularity: number;
+  poster_path: string;
+  vote_average: string;
+  overview: string;
+}
+
 export interface IGetMoviesResult {
   dates: {
     maximum: string;
@@ -36,14 +56,40 @@ export interface IGetOnAirTVResult {
   total_results: number;
 }
 
+export interface IGetTopRateMoviesResult {
+  page: number;
+  results: ITopRateMovies[];
+  total_pages: number;
+  total_results: number;
+}
+
+export interface IGetTopRateTVResult {
+  page: number;
+  results: ITopRateTV[];
+  total_pages: number;
+  total_results: number;
+}
+
 export function getMovies() {
   return fetch(`${BASE_PATH}/movie/now_playing?api_key=${API_KEY}`).then(
     (response) => response.json()
   );
 }
 
-export function getPopularMovies() {
+export function getOnAirTV() {
   return fetch(`${BASE_PATH}/tv/on_the_air?api_key=${API_KEY}`).then(
+    (response) => response.json()
+  );
+}
+
+export function getTopRateTV() {
+  return fetch(`${BASE_PATH}/tv/top_rated?api_key=${API_KEY}`).then(
+    (response) => response.json()
+  );
+}
+
+export function getTopRateMovies() {
+  return fetch(`${BASE_PATH}/movie/top_rated?api_key=${API_KEY}`).then(
     (response) => response.json()
   );
 }
