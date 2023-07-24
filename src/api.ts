@@ -9,6 +9,11 @@ interface IMovie {
   overview: string;
 }
 
+interface IObject {
+  key: string;
+  value: string;
+}
+
 interface IOnAirTV {
   id: number;
   backdrop_path: string;

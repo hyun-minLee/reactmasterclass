@@ -221,11 +221,23 @@ const infoVariants = {
 const offset = 6;
 
 function Home() {
+  interface IhoverObject {
+    backdrop_path: string;
+    title: string;
+    overview: string;
+  }
+
   const history = useHistory(); //url를 바꾸기위해서는 histroy obeject에 접근
   const bigMovieMatch = useRouteMatch<{ movieId: string }>("/movies/:movieId"); //movies/:movieId<< 랑 맞는지 확인해줌, 그리고 useRouteMatch안에 movieId가 string이라고 알려줘야함
   const bigTopRateMovieMatch = useRouteMatch<{ movieId: string }>(
     "/topratemovies/:movieId"
   );
+  const [hover, SetHover] = useState(false);
+  const [hoverObject, SetHoverObject] = useState<IhoverObject>({
+    backdrop_path: "",
+    title: "",
+    overview: "",
+  });
 
   const { scrollY } = useScroll();
   const { data: moviesData, isLoading: isMoviesLoading } =
@@ -235,8 +247,6 @@ function Home() {
       ["topratemovies", "ontoprate"],
       getTopRateMovies
     );
-
-  console.log("onTopRateMoviesData", onTopRateMoviesData);
 
   const [index, setIndex] = useState(0);
   const [leaving, setLeaving] = useState(false);
@@ -262,6 +272,27 @@ function Home() {
   const onBoxClicked = (movieId: number) => {
     history.push(`/movies/${movieId}`);
   };
+  const onBoxHovered = (movieId: number) => {
+    SetHover(true);
+    if (hover === true) {
+      moviesData?.results.find((movie) => {
+        if (movie.id === movieId) {
+          // SetHoverImage(movie.backdrop_path);
+          const dynamicObject: IhoverObject = {
+            backdrop_path: "",
+            title: "",
+            overview: "",
+          };
+          dynamicObject.backdrop_path = movie.backdrop_path;
+          dynamicObject.title = movie.title;
+          dynamicObject.overview = movie.overview;
+
+          SetHoverObject(dynamicObject);
+        }
+      });
+    }
+  };
+
   const onTopRateBoxClicked = (movieId: number) => {
     history.push(`/topratemovies/${movieId}`);
   };
@@ -277,8 +308,6 @@ function Home() {
       (topratemovies) =>
         topratemovies.id === +bigTopRateMovieMatch.params.movieId
     );
-
-  console.log(clickeTopRateMovie);
 
   const TypecheckClick = (type: string) => {
     if (type === "TV") {
@@ -296,10 +325,18 @@ function Home() {
         <>
           <Banner
             onClick={incraseIndex}
-            bgPhoto={makeImagePath(moviesData?.results[0].backdrop_path || "")}
+            bgPhoto={
+              hover
+                ? makeImagePath(hoverObject.backdrop_path)
+                : makeImagePath(moviesData?.results[0].backdrop_path || "")
+            }
           >
-            <Title>{moviesData?.results[0].title}</Title>
-            <Overview>{moviesData?.results[0].overview}</Overview>
+            <Title>
+              {hover ? hoverObject.title : moviesData?.results[0].title}
+            </Title>
+            <Overview>
+              {hover ? hoverObject.overview : moviesData?.results[0].overview}
+            </Overview>
           </Banner>
           <Slider>
             <Type onClick={() => TypecheckClick("MOVIE")}>Movies</Type>
@@ -323,6 +360,7 @@ function Home() {
                       initial="normal"
                       variants={boxVariants}
                       onClick={() => onBoxClicked(movie.id)}
+                      onHoverStart={() => onBoxHovered(movie.id)}
                       transition={{ type: "tween" }}
                       bgPhoto={makeImagePath(movie.backdrop_path, "w500")}
                     >
