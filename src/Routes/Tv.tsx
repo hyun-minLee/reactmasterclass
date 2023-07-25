@@ -14,7 +14,7 @@ import { useHistory, useRouteMatch } from "react-router-dom";
 const Wrapper = styled.div`
   background: black;
   padding-bottom: 200px;
-  height: 200vh;
+  height: 160vh;
 `;
 
 const Loader = styled.div`
