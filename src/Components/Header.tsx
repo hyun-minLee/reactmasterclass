@@ -93,6 +93,7 @@ const Search = styled.form`
   display: flex;
   align-items: center;
   position: relative;
+  width: 60px;
   svg {
     height: 25px;
   }

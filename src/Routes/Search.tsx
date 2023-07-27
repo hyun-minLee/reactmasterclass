@@ -233,7 +233,18 @@ const infoVariants = {
 const offset = 6;
 
 function Search() {
+  const location = useLocation(); //locaiton을 하면 지금 있는 곳에 정보를 얻을수 있음
+  const keyword = new URLSearchParams(location.search).get("keyword") || "";
+  const [uri, setUri] = useState(keyword);
+  const history = useHistory();
   const { scrollY } = useScroll();
+  const onOverlayClick = () => {
+    setBigMovieflag(false);
+    setBigTvflag(false);
+    setBigPersonflag(false);
+    // SetFlagId("");
+  };
+
   const [movieindex, setMovieIndex] = useState(0);
   const [movieleaving, setMovieLeaving] = useState(false);
   const toggleMovieLeaving = () => setMovieLeaving((prev) => !prev);
@@ -243,14 +254,10 @@ function Search() {
   const [personindex, setPersonIndex] = useState(0);
   const [personleaving, setPersonLeaving] = useState(false);
   const togglePersonLeaving = () => setPersonLeaving((prev) => !prev);
-
-  const onBoxClicked = (movieId: number) => {
-    // history.push(`/movies/${movieId}`);
-    console.log(movieId);
-  };
-  const location = useLocation(); //locaiton을 하면 지금 있는 곳에 정보를 얻을수 있음
-
-  const keyword = new URLSearchParams(location.search).get("keyword") || "";
+  const [bigmovieflag, setBigMovieflag] = useState(false);
+  const [bigtvflag, setBigTvflag] = useState(false);
+  const [bigpersonflag, setBigPersonflag] = useState(false);
+  const [flagId, SetFlagId] = useState("");
 
   const { data: movieData, isLoading: ismovieLoading } =
     useQuery<IGetMoviesResult>(["moviesearch", "moviesearching"], () =>
@@ -297,12 +304,68 @@ function Search() {
     }
   };
 
+  const onMovieBoxClicked = (Id: string) => {
+    // history.push(`/search/keyword/${uri}/${Id}`);
+    setBigMovieflag(true);
+    SetFlagId(Id);
+  };
+
+  const onTvBoxClicked = (Id: string) => {
+    // history.push(`/search/keyword/${uri}/${Id}`);
+    setBigTvflag(true);
+    SetFlagId(Id);
+  };
+  const onPersonBoxClicked = (Id: string) => {
+    // history.push(`/search/keyword/${uri}/${Id}`);
+    setBigPersonflag(true);
+    SetFlagId(Id);
+  };
+
+  const searchForMovieImage = (flagId: string) => {
+    const data = movieData?.results.find((movie) => movie.id + "" === flagId);
+    if (data) {
+      return data?.backdrop_path;
+    } else {
+      return "";
+    }
+  };
+
+  const searchForTvImage = (flagId: string) => {
+    const data = tvData?.results.find((tv) => tv.id + "" === flagId);
+    if (data) {
+      return data?.backdrop_path;
+    } else {
+      return "";
+    }
+  };
+
+  const searchForPersonImage = (flagId: string) => {
+    const data = personData?.results.find(
+      (person) => person.id + "" === flagId
+    );
+    if (data) {
+      return data?.profile_path;
+    } else {
+      return "";
+    }
+  };
+
+  const bigMovieMatch = useRouteMatch<{ keyword: string; Id: string }>(
+    `/search/keyword/:uri/:Id`
+  );
+
+  const clickedMovie = movieData?.results.find((movie) => movie.id === +flagId);
+  const clickedTv = tvData?.results.find((tv) => tv.id === +flagId);
+  const clickedPerson = personData?.results.find(
+    (person) => person.id === +flagId
+  );
+
   return (
     <Wrapper>
-      {ismovieLoading && istvLoading && ispersonLoading ? (
-        <Loader>Loading...</Loader>
-      ) : (
-        <>
+      <>
+        {ismovieLoading ? (
+          <Loader>Loading...</Loader>
+        ) : (
           <Slider>
             <Type onClick={incraseMovieIndex}>MOVIE</Type>
             <AnimatePresence
@@ -326,7 +389,7 @@ function Search() {
                       whileHover="hover"
                       initial="normal"
                       variants={boxVariants}
-                      onClick={() => onBoxClicked(movie.id)}
+                      onClick={() => onMovieBoxClicked(movie.id + "")}
                       // onHoverStart={() => onBoxHovered(movie.id)}
                       transition={{ type: "tween" }}
                       bgPhoto={makeImagePath(movie.backdrop_path, "w500")}
@@ -339,6 +402,10 @@ function Search() {
               </Row>
             </AnimatePresence>
           </Slider>
+        )}
+        {istvLoading ? (
+          <Loader>Loading...</Loader>
+        ) : (
           <Slider2>
             <Type onClick={incraseTvIndex}>TV</Type>
             <AnimatePresence initial={false} onExitComplete={toggleTvLeaving}>
@@ -359,7 +426,7 @@ function Search() {
                       whileHover="hover"
                       initial="normal"
                       variants={boxVariants}
-                      onClick={() => onBoxClicked(tv.id)}
+                      onClick={() => onTvBoxClicked(tv.id + "")}
                       transition={{ type: "tween" }}
                       bgPhoto={makeImagePath(tv.backdrop_path, "w500")}
                     >
@@ -371,6 +438,10 @@ function Search() {
               </Row2>
             </AnimatePresence>
           </Slider2>
+        )}
+        {ispersonLoading ? (
+          <Loader>Loading...</Loader>
+        ) : (
           <Slider3>
             <Type onClick={incrasePersonIndex}>PERSON</Type>
             <AnimatePresence
@@ -386,6 +457,7 @@ function Search() {
                 key={personindex}
               >
                 {personData?.results
+
                   .slice(offset * personindex, offset * personindex + offset)
                   .map((person) => (
                     <Box3
@@ -394,7 +466,7 @@ function Search() {
                       whileHover="hover"
                       initial="normal"
                       variants={boxVariants}
-                      onClick={() => onBoxClicked(person.id)}
+                      onClick={() => onPersonBoxClicked(person.id + "")}
                       transition={{ type: "tween" }}
                       bgPhoto={makeImagePath(person.profile_path, "w500")}
                     >
@@ -406,66 +478,85 @@ function Search() {
               </Row3>
             </AnimatePresence>
           </Slider3>
-          <AnimatePresence>
-            {/* {bigMovieMatch ? (
-              <>
-                <Overlay
-                  onClick={onOverlayClick}
-                  exit={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                />
-                <BigMovie
-                  style={{ top: scrollY.get() + 100 }}
-                  layoutId={bigMovieMatch.params.movieId}
-                >
-                  {clickedMovie && (
-                    <>
-                      <BigCover
-                        style={{
-                          backgroundImage: `linear-gradient(to top, black, transparent), url(${makeImagePath(
-                            clickedMovie.backdrop_path,
-                            "w500"
-                          )})`,
-                        }}
-                      />
-                      <BigTitle>{clickedMovie.title}</BigTitle>
-                      <BigOverview>{clickedMovie.overview}</BigOverview>
-                    </>
-                  )}
-                </BigMovie>
-              </>
-            ) : null}
-            {bigTopRateMovieMatch ? (
-              <>
-                <Overlay
-                  onClick={onOverlayClick}
-                  exit={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                />
-                <BigMovie
-                  style={{ top: scrollY.get() + 100 }}
-                  layoutId={bigTopRateMovieMatch.params.movieId}
-                >
-                  {clickeTopRateMovie && (
-                    <>
-                      <BigCover
-                        style={{
-                          backgroundImage: `linear-gradient(to top, black, transparent), url(${makeImagePath(
-                            clickeTopRateMovie.backdrop_path,
-                            "w500"
-                          )})`,
-                        }}
-                      />
-                      <BigTitle>{clickeTopRateMovie.title}</BigTitle>
-                      <BigOverview>{clickeTopRateMovie.overview}</BigOverview>
-                    </>
-                  )}
-                </BigMovie>
-              </>
-            ) : null} */}
-          </AnimatePresence>
-        </>
-      )}
+        )}
+        <AnimatePresence>
+          {bigmovieflag ? (
+            <>
+              <Overlay
+                onClick={onOverlayClick}
+                exit={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+              />
+              <BigMovie style={{ top: scrollY.get() + 100 }} layoutId={flagId}>
+                {clickedMovie && (
+                  <>
+                    <BigCover
+                      style={{
+                        backgroundImage: `linear-gradient(to top, black, transparent), url(${makeImagePath(
+                          searchForMovieImage(flagId),
+                          "w500"
+                        )})`,
+                      }}
+                    />
+                    {/* <BigTitle>{clickedMovie.title}</BigTitle>
+                    <BigOverview>{clickedMovie.overview}</BigOverview> */}
+                  </>
+                )}
+              </BigMovie>
+            </>
+          ) : null}
+          {bigtvflag ? (
+            <>
+              <Overlay
+                onClick={onOverlayClick}
+                exit={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+              />
+              <BigMovie style={{ top: scrollY.get() + 100 }} layoutId={flagId}>
+                {clickedTv && (
+                  <>
+                    <BigCover
+                      style={{
+                        backgroundImage: `linear-gradient(to top, black, transparent), url(${makeImagePath(
+                          searchForTvImage(flagId),
+                          "w500"
+                        )})`,
+                      }}
+                    />
+                    {/* <BigTitle>{clickedMovie.title}</BigTitle>
+                    <BigOverview>{clickedMovie.overview}</BigOverview> */}
+                  </>
+                )}
+              </BigMovie>
+            </>
+          ) : null}
+          {bigpersonflag ? (
+            <>
+              <Overlay
+                onClick={onOverlayClick}
+                exit={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+              />
+              <BigMovie style={{ top: scrollY.get() + 100 }} layoutId={flagId}>
+                {clickedPerson && (
+                  <>
+                    <BigCover
+                      style={{
+                        backgroundImage: `linear-gradient(to top, black, transparent), url(${makeImagePath(
+                          searchForPersonImage(flagId),
+                          "w500"
+                        )})`,
+                      }}
+                    />
+                    {/* <BigTitle>{clickedMovie.title}</BigTitle>
+                    <BigOverview>{clickedMovie.overview}</BigOverview> */}
+                  </>
+                )}
+              </BigMovie>
+            </>
+          ) : null}
+        </AnimatePresence>
+      </>
     </Wrapper>
   );
 }
